@@ -38,7 +38,7 @@ def preprocess_stemming(text):
     ]
 
 
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_sm", disable=["parser", "ner"])
 
 def preprocess_lemma(text):
 
