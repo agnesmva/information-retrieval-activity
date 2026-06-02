@@ -75,59 +75,63 @@ def mean_average_precision(ap_scores):
     return sum(ap_scores) / len(ap_scores)
 
 def avaliar_recuperacao_por_categoria(
-    queries_textos, 
-    queries_targets, 
+    queries_textos,
+    queries_targets,
     base_targets,
     funcao_preprocessamento,
-    vocabulary, 
-    term_to_idx, 
-    idf_vector, 
+    vocabulary,
+    term_to_idx,
+    idf_vector,
     tfidf_matrix,
     categorias_alvo,
-    nomes_categorias,
     top_k=20
 ):
-    """
-    Avalia um pipeline específico (ex: lemma) e retorna o AP médio para categorias específicas.
-    """
     resultados_categoria = {}
-    
-    # Para cada categoria que queremos testar (ex: comp.graphics)
-    for cat_nome in categorias_alvo:
-        cat_id = nomes_categorias.index(cat_nome)
-        
-        # 1. Filtra as queries que pertencem a essa categoria específica
-        indices_queries_cat = [i for i, target in enumerate(queries_targets) if target == cat_id]
-        
-        aps_desta_categoria = []
-        
-        # 2. Roda a busca para cada query dessa categoria
-        for q_idx in indices_queries_cat:
-            texto_query = queries_textos[q_idx]
-            
-            # Aplica o pré-processamento específico (original, stem ou lemma)
+
+    for categoria in categorias_alvo:
+
+        print(f"Processando categoria: {categoria}")
+
+        # seleciona apenas as queries desta categoria
+        indices_queries = [
+            i
+            for i, target in enumerate(queries_targets)
+            if target == categoria
+        ]
+
+        aps_categoria = []
+
+        for idx_query in indices_queries:
+
+            texto_query = queries_textos[idx_query]
+
             query_tokens = funcao_preprocessamento(texto_query)
-            
-            # Vetoriza
-            query_vector = calcular_tf_idf_query(query_tokens, vocabulary, term_to_idx, idf_vector)
-            
-            # Busca os top_k documentos
-            resultados_busca = buscar_documentos(query_vector, tfidf_matrix, top_k=top_k)
-            ids_recuperados = [idx for idx, score in resultados_busca]
-            
-            # 3. Monta o Gabarito (Ground Truth) para esta query
-            # Relevante = 1 (mesma categoria da query), Irrelevante = 0
-            # Como calcular_ap geralmente espera uma lista de 0s e 1s ou lista de relevantes:
-            
-            # Opção A: Se o seu calcular_ap espera uma lista de IDs relevantes:
-            ids_relevantes_gabarito = [i for i, t in enumerate(base_targets) if t == cat_id]
-            ranking_com_scores = [(idx, 1.0) for idx in ids_recuperados]
-            ap_score = average_precision(ranking_com_scores, base_targets, cat_id)
-            
-            aps_desta_categoria.append(ap_score)
-            
-        # Calcula a média do AP (Mean Average Precision) para esta categoria
-        map_categoria = sum(aps_desta_categoria) / len(aps_desta_categoria) if aps_desta_categoria else 0.0
-        resultados_categoria[cat_nome] = round(map_categoria, 4)
-        
+
+            query_vector = calcular_tf_idf_query(
+                query_tokens,
+                vocabulary,
+                term_to_idx,
+                idf_vector
+            )
+
+            resultados_busca = buscar_documentos(
+                query_vector,
+                tfidf_matrix,
+                top_k=top_k
+            )
+
+            ap = average_precision(
+                resultados_busca,
+                base_targets,
+                categoria
+            )
+
+            aps_categoria.append(ap)
+
+        resultados_categoria[categoria] = (
+            round(sum(aps_categoria) / len(aps_categoria), 4)
+            if aps_categoria
+            else 0.0
+        )
+
     return resultados_categoria

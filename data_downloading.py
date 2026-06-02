@@ -49,3 +49,13 @@ def download_data_subset_query():
         "colecao_subset_query.pkl", 
         lambda: fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
     )
+def download_data_set_categorias(categorias, type):
+
+    return carregar_ou_baixar(
+        "colecao_subset_removida.pkl",
+        lambda: fetch_20newsgroups(
+            subset=type,
+            categories=categorias,
+            remove=('headers', 'footers', 'quotes')
+        )
+    )

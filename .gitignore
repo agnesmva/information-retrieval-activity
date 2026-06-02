@@ -10,3 +10,6 @@ __pycache__
 *.env
 .mypycache/
 notebooks/data/
+*.csv
+*.tsv
+*.json
